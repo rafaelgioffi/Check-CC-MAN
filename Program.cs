@@ -2,26 +2,24 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
+using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
-using System.Net;
 using System.Text;
 
 namespace Check_CC_MAN
 {
-    internal class Program
+    public class Program
     {
         static void Main(string[] args)
         {
             string LogFile = ConfigurationSettings.AppSettings["LogFile"];
             string Folder = ConfigurationSettings.AppSettings["FolderToProcessFiles"];
-            string FolderToBackup = ConfigurationSettings.AppSettings["FolderToBackupFiles"];            
+            string FolderToBackup = ConfigurationSettings.AppSettings["FolderToBackupFiles"];
             string FileToProcess = ConfigurationSettings.AppSettings["FileToProcess"];
             string[] filesInFolder;
             int fileQuantity = 0;
             int linha = 1;
-
 
             Log("\n################### Inicio do processamento ###################", true);
             try
@@ -31,57 +29,53 @@ namespace Check_CC_MAN
             }
             catch (Exception ex)
             {
-                Log($"\nNenhum arquivo {FileToProcess} encontrado! Ignorando o processamento...\n\n", false);                
+                Log($"\nNenhum arquivo {FileToProcess}.TXT encontrado! Ignorando o processamento...\n\n", false);
                 return;
             }
             string FileValidName = "";    //nome do novo arquivo corrigido
-            string FileInvalidName = "";    //nome do novo arquivo COM o(s) DN(s) incorretos
+            string FileInvalidName = "";    //nome do novo arquivo COM o(s) DN(s) incorretos            
 
             List<string> FileValid = new List<string>();
             List<string> FileInvalid = new List<string>();
-            string MailBody;
+            List<int> InvalidLines = new List<int>();
 
             if (fileQuantity > 0)
             {
-                Log($"Iniciando o processamento de {fileQuantity} arquivos.", false);                
+                Log($"Iniciando o processamento de {fileQuantity} arquivos.", false);
                 int counter = 1;
                 foreach (var file in filesInFolder) //processa arquivo por arquivo encontrado na pasta...
                 {
-                    //limpa as lists antes de processar o arquivo para não duplicar os dados caso tenha mais de um arquivo...
                     FileValid.Clear();
                     FileInvalid.Clear();
-                    MailBody = "";
 
-                    //preparação do corpo do e-MailBody
-                    MailBody += $"<html><head></head><body>\n<h2>\nCleanDNs 2.0 - Relatório de processamento - {DateTime.Now.ToString("dd/MM/yyyy")}\n</h2>\n<table>";
-
-                    Log($"Processando o arquivo {counter}/{fileQuantity}...", false);                    
+                    Log($"Processando o arquivo {counter}/{fileQuantity}...", false);
                     try
                     {
                         string[] allLines = File.ReadAllLines(file);
-                        string[] procDate = allLines[0].Split('#');
+                        int lines = allLines.Length;
                         
-                        string timeFile = File.GetCreationTime(file).ToString("HHmmss");
-
-                        foreach (var l in allLines) //validação de cada linha...
+                        for (int i = 0; i < lines; i++)
                         {
-                            string[] DnActual = l.Split('#');
-                            PAREI AQUI
+                            string[] actualLine = allLines[i].Split('#');
 
-                            if (value > MaxValue)
-                            {
-                                FileInvalid.Add(l);
-                                MailBody += $"\n<tr>\n<td>{DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")} => Linha {linha} do arquivo {file} inválida. Valor: {value.ToString("C")}\n</td>\n</tr>";
-                            }
+                            if (!string.IsNullOrEmpty(actualLine[0]) && !string.IsNullOrEmpty(actualLine[1]) && !string.IsNullOrEmpty(actualLine[2]) && !string.IsNullOrEmpty(actualLine[3]) && !string.IsNullOrEmpty(actualLine[4]) && !string.IsNullOrEmpty(actualLine[5]) && !string.IsNullOrEmpty(actualLine[6]) && !string.IsNullOrEmpty(actualLine[7]) && !string.IsNullOrEmpty(actualLine[8]) && !string.IsNullOrEmpty(actualLine[9]) && !string.IsNullOrEmpty(actualLine[10]) && !string.IsNullOrEmpty(actualLine[11]) && !string.IsNullOrEmpty(actualLine[12]) && !string.IsNullOrEmpty(actualLine[13]) && actualLine[14] == " " && actualLine[15] == " " && !string.IsNullOrEmpty(actualLine[16]) && !string.IsNullOrEmpty(actualLine[17]) && !string.IsNullOrEmpty(actualLine[18]) && !string.IsNullOrEmpty(actualLine[19]) && !string.IsNullOrEmpty(actualLine[20]) && !string.IsNullOrEmpty(actualLine[21]) && !string.IsNullOrEmpty(actualLine[22]) && !string.IsNullOrEmpty(actualLine[23]) && actualLine[24] == "        ")
+                        {
+                            FileValid.Add(allLines[i]);
+                        }
                             else
                             {
-                                FileValid.Add(l);
+                                FileInvalid.Add(allLines[i]);
+                                InvalidLines.Add(i);
                             }
-                            linha++;
                         }
 
                         if (FileInvalid.Count > 0)  //só executa alguma ação se encontrar algum DN inválido...
                         {
+                            for (int i = 0; i< FileInvalid.Count; i++)
+                            {
+                                Log($"Linha {i} suspeita");
+                            }
+                        /*
                             string[] actual = file.Split('\\');
                             string actualName = actual.Last();
                             actual = actualName.Split('.');
@@ -100,7 +94,7 @@ namespace Check_CC_MAN
                                 int tempTime = int.Parse(timeFile) + 3;
                                 FileValidName = $"{actualName}.TXT.ERROR.{procDateFiltered}.{tempTime}";
                             }
-
+                        
                             using (StreamWriter sw = new StreamWriter(FolderNonProcessed + FileInvalidName)) //cria o arquivo somente dos banidos...
                             {
                                 foreach (string newLines in FileInvalid)
@@ -153,31 +147,28 @@ namespace Check_CC_MAN
                             MailBody += $"<p><b><i>Atenciosamente.</i></b></p>\n<p><b>Monitoring Team</b></p>\n<p>www.br.atos.net</p><img src='cid:assinatura' />";
                             MailBody += $"<p>This email and the documents attached are confidential and intended solely for the addressee; it may also be privileged. If you receive this e-mail in error, please notify the sender immediately and destroy it. As its integrity cannot be secured on the internet, the Atos group liability cannot be triggered for the message content. Although the snder endeavors to maintain a computer virus-free network, the sender does not warrant that this transmission is virus-free and will not be liable for any damages resulting from any virus transmitted.</p>\n</body>\n</html>";
                             EnviaEMail();
+                        */
                         }
                         else
                         {
-                            Log($"Nenhum DN inválido encontrado! Nenhuma alteração realizada no arquivo {file}", false);
-                            Console.WriteLine($"Nenhum DN inválido encontrado! Nenhuma alteração realizada no arquivo {file}");
+                            Log($"Nenhum DN inválido encontrado! Nenhuma alteração realizada no arquivo {file}");                            
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log($"Erro ao processar o arquivo {file}. {ex.Message}", false);
-                        Console.WriteLine($"Erro ao processar o arquivo {file}.\n{ex.Message}");
+                        Log($"Erro ao processar o arquivo {file}. {ex.Message}");                        
                     }
                     counter++;
                 }
             }
             else
             {
-                Log($"Nenhum arquivo {FileToProcess} para processar em {Folder}", false);
-                Console.WriteLine($"Nenhum arquivo {FileToProcess} para processar em {Folder}");
-            }
+                Log($"Nenhum arquivo {FileToProcess} para processar em {Folder}");
+                }
 
             Log("#################### Fim do processamento #####################\n", true);
-            Console.WriteLine("#################### Fim do processamento ####################\n");
-
-            void Log(string message, bool special)
+            
+            void Log(string message, bool special = false)
             {
                 using (StreamWriter swLog = new StreamWriter(LogFile, true))
                 {
@@ -194,54 +185,8 @@ namespace Check_CC_MAN
                 }
             }
 
-            void EnviaEMail()
-            {
-                string dateMail = DateTime.Now.ToString("dd/MM/yyyy");
-                string sender = ConfigurationSettings.AppSettings["SenderMail"];
-                string server = ConfigurationSettings.AppSettings["ServerMail"];
-                string subject = ConfigurationSettings.AppSettings["SubjectMail"];
-                string sign = ConfigurationSettings.AppSettings["SignMail"];
-                string assunto = $"{dateMail}{subject}";
-
-                try
-                {
-                    MailMessage message = new MailMessage();
-                    message.From = new MailAddress(sender);
-                    message.Subject = assunto;
-                    message.Body = MailBody;
-                    message.IsBodyHtml = true;
-
-                    Console.WriteLine("Enviando o E-Mail...");
-
-                    for (int i = 1; i <= 10; i++)
-                    {
-                        if (!String.IsNullOrEmpty(ConfigurationSettings.AppSettings[$"RecipientMail{i}"]))
-                        {
-                            message.To.Add(ConfigurationSettings.AppSettings[$"RecipientMail{i}"]);
-                        }
-                    }
-
-                    SmtpClient smtp = new SmtpClient(server);
-                    smtp.Credentials = new NetworkCredential(sender, "");
-
-                    // Adicionar a imagem à mensagem como recurso
-                    LinkedResource signRes = new LinkedResource(sign, MediaTypeNames.Image.Jpeg);
-                    signRes.ContentId = "assinatura";
-                    AlternateView htmlView = AlternateView.CreateAlternateViewFromString(MailBody, Encoding.UTF8, MediaTypeNames.Text.Html);
-                    htmlView.LinkedResources.Add(signRes);
-                    message.AlternateViews.Add(htmlView);
-
-                    smtp.Send(message);
-
-                    Console.WriteLine("Relatório enviado com sucesso");
-                    Log("Relatório enviado com sucesso", false);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Falha ao enviar o relatório... {ex.Message}");
-                    Log($"Falha ao enviar o relatório... {ex.Message}", false);
-                }
-            }
+            
+            
         }
     }
 }
